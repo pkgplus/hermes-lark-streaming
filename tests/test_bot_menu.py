@@ -149,6 +149,7 @@ async def test_tokens_expire_replay_and_stale_session_fail_closed(adapter):
 @pytest.mark.asyncio
 async def test_busy_confirm_never_dispatches(adapter):
     await adapter.menu.open(menu_event("session"))
+    await adapter.menu.click(action_event(tokens(adapter)[("history", "sid-old", 0)]))
     await adapter.menu.click(action_event(tokens(adapter)[("select_session", "sid-old")]))
     adapter.menu.host.busy.return_value = True
     await adapter.menu.click(action_event(tokens(adapter)[("confirm_session", "sid-old")]))

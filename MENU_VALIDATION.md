@@ -2,7 +2,8 @@
 
 ## 当前结果
 
-- 父会话独立复跑全套：`510 passed, 6 warnings in 174.02s`。
+- 父会话独立复跑全套：`514 passed, 6 warnings in 157.52s`。
+- 固定菜单仅 `model` / `session`；会话列表选中目标后先查看该会话消息，再确认切换，不提供独立「当前会话」菜单。
 - Ruff：`All checks passed!`。
 - Mypy：`Success: no issues found in 27 source files`。
 - 插件 verify：`native platform interfaces available; no old injections found`，不发送飞书消息。

@@ -86,7 +86,7 @@ async def test_real_sdk_menu_and_card_click_reach_plugin_without_replacing_nativ
         "schema": "2.0",
         "header": {"event_type": "application.bot.menu_v6"},
         "event": {
-            "event_key": "current",
+            "event_key": "session",
             "operator": {"operator_id": {"open_id": "ou_owner", "user_id": "tenant", "union_id": "on_union"}},
         },
     }
@@ -95,7 +95,7 @@ async def test_real_sdk_menu_and_card_click_reach_plugin_without_replacing_nativ
         if adapter.menu.tokens:
             break
         await asyncio.sleep(0.01)
-    token = tokens(adapter)[("history", "sid-current", 0)]
+    token = tokens(adapter)[("history", "sid-old", 0)]
     click = {
         "schema": "2.0",
         "header": {"event_type": "card.action.trigger"},

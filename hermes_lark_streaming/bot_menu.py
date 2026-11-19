@@ -27,7 +27,7 @@ from .menu_host import MenuHost
 log = logging.getLogger(__name__)
 PAGE_SIZE = 8
 TOKEN_TTL = 300
-MENU_KEYS = frozenset({"model", "session", "current"})
+MENU_KEYS = frozenset({"model", "session"})
 
 
 def field(obj: Any, key: str, default: Any = None) -> Any:
@@ -225,18 +225,19 @@ class BotMenu:
             for row in rows:
                 sid = row["id"]
                 label = str(row.get("title") or sid)
-                buttons.extend([(f"切换：{label}", ("select_session", sid)), (f"预览：{label}", ("history", sid, 0))])
+                buttons.append((f"查看消息：{label}", ("history", sid, 0)))
             self._pages(buttons, "session", page, more)
             buttons.append(("新建会话", ("select_new",)))
             buttons.append(("刷新会话", ("session", 0)))
         elif kind == "history":
             sid, page = args
             history_rows, more = await self.host.history(source, sid, page)
-            title = f"历史预览 · 第 {page + 1} 页"
+            title = f"会话消息 · 第 {page + 1} 页"
             body = (
                 "\n\n".join(f"{'用户' if role == 'user' else '助手'}：\n{text}" for role, text in history_rows)
                 or "没有可显示的普通对话。"
             )
+            body = f"选中会话：{sid}\n\n{body}"
             if page:
                 buttons.append(("上一页", ("history", sid, page - 1)))
             if more:
@@ -251,16 +252,8 @@ class BotMenu:
                 body += "\n切换后，当前会话上下文可能发送给所选提供商；不会修改全局默认模型。"
             elif kind == "select_new":
                 title, body = "新建会话？", "开始新的对话上下文，当前会话历史仍保留，可从会话列表恢复。"
-            buttons = [("确认切换", (kind.replace("select_", "confirm_"), *args)), ("取消", ("current", 0))]
-        elif kind == "current":
-            fn = getattr(a, "get_session_model_settings", None)
-            settings = await asyncio.to_thread(fn, source) if fn else None
-            title, body = "当前会话", f"会话：{current or '尚未创建'}"
-            if settings:
-                body += f"\n提供商：{settings['provider']}\n模型：{settings['model']}"
-            buttons = [("切换模型", ("model", 0)), ("会话列表", ("session", 0))]
-            if current:
-                buttons.append(("预览当前会话", ("history", current, 0)))
+            back = "model" if kind == "select_model" else "session"
+            buttons = [("确认切换", (kind.replace("select_", "confirm_"), *args)), ("取消", (back, 0))]
         else:
             return
         self._prune()
