@@ -200,6 +200,66 @@ async def dispatch(native, text, expected=None, *, marked=True):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("fallback", [False, True])
+async def test_native_menu_feedback_replies_to_card_without_changing_ingress_identity(native, monkeypatch, fallback):
+    import time
+    from unittest.mock import AsyncMock
+
+    from hermes_lark_streaming.bot_menu import MenuToken, Owner
+
+    adapter = native.adapter
+    # Exercise the plugin's real static-card sender and native fallback; replace
+    # only remote API calls, not native admission, command handlers or delivery.
+    monkeypatch.setattr(adapter, "send", FeishuStreamingAdapter.send.__get__(adapter))
+    adapter._client = object()
+    card_send = AsyncMock(return_value="om_feedback")
+    if fallback:
+        card_send.side_effect = RuntimeError("CardKit unavailable")
+    monkeypatch.setattr(adapter.cards._client, "send_card_to_chat", card_send)
+    wire_send = AsyncMock(
+        return_value=SimpleNamespace(
+            code=0, msg="ok", success=lambda: True, data=SimpleNamespace(message_id="om_fallback")
+        )
+    )
+    monkeypatch.setattr(adapter, "_feishu_send_with_retry", wire_send)
+    seen = []
+    handler = adapter._message_handler
+
+    async def record_native_event(event):
+        seen.append(event)
+        return await handler(event)
+
+    adapter._message_handler = record_native_event
+    expires = time.monotonic() + 300
+    owner = Owner(("ou_owner", "tenant", ""), native.source, expires)
+    adapter.menu.tokens["confirm-test"] = MenuToken(
+        owner, "om_menu_card", native.current, ("confirm_model", "custom", "test-after"), expires
+    )
+    event = SimpleNamespace(
+        operator=SimpleNamespace(open_id="ou_owner", user_id="tenant", union_id=""),
+        context=SimpleNamespace(open_chat_id="oc_dm", open_message_id="om_menu_card"),
+        action=SimpleNamespace(value={"hermes_menu_token": "confirm-test"}),
+    )
+    await adapter.menu.click(event)
+    assert durable_route(native)["model_override"]["model"] == "test-after"
+    assert len(seen) == 1
+    assert seen[0].message_id.startswith("menu-")
+    assert seen[0].message_id != "om_menu_card"
+    card_send.assert_awaited_once()
+    assert card_send.call_args.kwargs["reply_to_message_id"] == "om_menu_card"
+    assert "test-after" in str(card_send.call_args)
+    if fallback:
+        wire_send.assert_awaited_once()
+        assert wire_send.call_args.kwargs["reply_to"] == "om_menu_card"
+    else:
+        wire_send.assert_not_awaited()
+    # The consumed action cannot execute or publish feedback a second time.
+    await adapter.menu.click(event)
+    assert len(seen) == 1
+    assert card_send.await_count == 1
+
+
+@pytest.mark.asyncio
 async def test_native_authority_allows_idle_resume_and_reads_back_route(native, provider):
     assert native.runner.session_authority is not None
     await dispatch(native, f"/resume {native.old}")

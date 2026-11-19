@@ -366,7 +366,10 @@ class BotMenu:
                         sender_id=SimpleNamespace(open_id=ids[0], user_id=ids[1], union_id=ids[2]),
                         event_chat_type="p2p",
                         message_id="menu-" + secrets.token_hex(16),
-                        raw_message={"_hermes_menu_expected": state.current},
+                        raw_message={
+                            "_hermes_menu_expected": state.current,
+                            "_hermes_menu_reply_to": state.message,
+                        },
                     )
                 else:
                     await self.render(state.owner, state.current, state.action, state.message)

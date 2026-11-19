@@ -81,6 +81,9 @@ class FeishuStreamingAdapter(builtin.FeishuAdapter):
         # sender/profile lookups, immediately before native ingress claims its guard.
         expected = field(event.raw_message, "_hermes_menu_expected")
         if expected is not None:
+            # Keep the synthetic id for native ingress/dedup; only reply to the
+            # real card bound to the verified action, including native fallback.
+            event.reply_anchor_override = field(event.raw_message, "_hermes_menu_reply_to")
             if self.menu.host.busy(event.source) or await self.menu.host.current(event.source) != expected:
                 await self.send(event.source.chat_id, "会话忙碌或已改变, 请重新打开菜单。")
                 return

@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 CASES = [
+    "test_native_menu_feedback_replies_to_card_without_changing_ingress_identity",
     "test_native_authority_allows_idle_resume_and_reads_back_route",
     "test_native_model_pin_is_durable_and_next_real_turn_uses_it",
     "test_busy_native_turn_rejects_switch_without_interrupting",
