@@ -8,6 +8,7 @@ it is unavailable. Native commands still own authorization and all persistence.
 from __future__ import annotations
 
 import asyncio
+import json
 import shlex
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
@@ -145,6 +146,60 @@ class MenuHost:
                 yield
             finally:
                 MENU_COMMAND.reset(token)
+
+    async def recent_dm_sources(self, limit: int = 20) -> list[Any]:
+        """Recent Feishu DM sources from state.db, as routing hints only.
+
+        The owner mapping lives in memory; after a gateway restart it is empty and a
+        menu click would otherwise be dropped. ``owner`` restored from here is still
+        re-authorized per click (pairing/admission + sender authorization).
+        """
+        if getattr(getattr(self.runner, "config", None), "multiplex_profiles", False):
+            raise RuntimeError("Menu session reads do not support multiplex profiles yet")
+        from gateway.config import Platform  # type: ignore[import-untyped]
+        from gateway.session import SessionSource  # type: ignore[import-untyped]
+
+        from hermes_constants import get_hermes_home  # type: ignore[import-untyped]
+        from hermes_state import SessionDB  # type: ignore[import-untyped]
+
+        # Read the same store the gateway writes, but through an independent
+        # read-only handle: the runner's store facade does not expose list queries.
+        db = await asyncio.to_thread(SessionDB, Path(get_hermes_home()) / "state.db", read_only=True)
+        try:
+            rows = await asyncio.to_thread(
+                db.list_sessions_rich,
+                source="feishu",
+                limit=limit,
+                order_by_last_active=True,
+                compact_rows=True,
+            )
+        finally:
+            await asyncio.to_thread(db.close)
+        sources: list[Any] = []
+        for row in rows:
+            origin = row.get("origin_json") or {}
+            if isinstance(origin, str):
+                try:
+                    origin = json.loads(origin)
+                except ValueError:
+                    continue
+            if not isinstance(origin, dict) or origin.get("chat_type") != "dm":
+                continue
+            chat_id, user_id = origin.get("chat_id"), origin.get("user_id")
+            if not chat_id or not user_id:
+                continue
+            sources.append(
+                SessionSource(
+                    platform=Platform.FEISHU,
+                    chat_id=chat_id,
+                    chat_name=origin.get("chat_name"),
+                    chat_type="dm",
+                    user_id=user_id,
+                    user_name=origin.get("user_name"),
+                    user_id_alt=origin.get("user_id_alt"),
+                )
+            )
+        return sources
 
     def _reader(self, source: Any) -> Any:
         from hermes_state import SessionDB  # type: ignore[import-untyped]

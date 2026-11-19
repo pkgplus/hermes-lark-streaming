@@ -176,6 +176,22 @@ class BotMenu:
         while len(self.owners) > 1024:
             self.owners.popitem(last=False)
 
+    async def _restore_owner(self, ids: tuple[str, str, str]) -> Owner | None:
+        """Rebuild a DM binding lost to a gateway restart; state.db is the durable record."""
+        try:
+            sources = await self.host.recent_dm_sources()
+        except Exception:
+            log.warning("Bot menu could not read recent DM sources", exc_info=True)
+            return None
+        for source in sources:
+            if source.user_id != ids[0]:
+                continue
+            owner = Owner(ids, copy(source), time.monotonic() + 86400)
+            if self.authorized(owner, ids):
+                self.owners[ids[0]] = owner
+                return owner
+        return None
+
     def authorized(self, owner: Owner, ids: tuple[str, str, str]) -> bool:
         # Compare matching tiers only; callback omissions don't invent or swap identities.
         if (
@@ -200,7 +216,11 @@ class BotMenu:
                 return
             ids = identity(field(field(event, "operator"), "operator_id"))
             owner = self.owners.get(ids[0])
+            if owner is None:
+                owner = await self._restore_owner(ids)
             if owner is None or not self.authorized(owner, ids):
+                if owner is None:
+                    log.info("Bot menu ignored: no verified DM binding for this user yet")
                 return
             lock = self._locks.setdefault(owner.source.chat_id, asyncio.Lock())
             async with lock:
