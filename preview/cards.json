@@ -64,7 +64,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "2LeCiYfz8QgbtithrA660L2UUhmEzxcp"
+                  "hermes_menu_token": "PgsFAiFNLLxa51Yyu_gDrqBixd34JVoM"
                 }
               }
             ]
@@ -105,7 +105,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "8ucMOQZW5Y6eUljiWFdHX5LBRXfvytiB"
+                  "hermes_menu_token": "HO28KLqaNaOXVybyUp_kqP2VkvqCfiK2"
                 }
               }
             ]
@@ -146,7 +146,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "qmkGp5xvnxZkvN37IhWCLotPTiJSYNyw"
+                  "hermes_menu_token": "rC_iR0d1NWcxXkImPdml865thZujz5Nj"
                 }
               }
             ]
@@ -197,7 +197,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "C_jzDaOoG14Zqm1hoTDV5akRxk5-BkE0"
+                  "hermes_menu_token": "meW7tjUa5MsCb7iyKuACoQp4VbzkdFDP"
                 }
               }
             ]
@@ -274,7 +274,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "n-jHpRCgh9FXnlsQtfXnpRqfrSlSdD15"
+                  "hermes_menu_token": "8qLYAAnTIMVyq0G80GiJYsZHnoQA4VA9"
                 }
               }
             ]
@@ -315,7 +315,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "C9gr7TRqTdVfflSAyKvyqim8l37ONrNt"
+                  "hermes_menu_token": "PpnbNx9rPzvEWoZMCU9R3O114wWF_0yA"
                 }
               }
             ]
@@ -366,7 +366,7 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "JiCBaeBnpeMwBQCmmqHY7rkwPaUVc7Qe"
+                  "hermes_menu_token": "ZtViKZssRQuBGdEKyjpasFkOxCNBLfz4"
                 }
               }
             ]
@@ -394,7 +394,7 @@
             "type": "default",
             "size": "small",
             "value": {
-              "hermes_menu_token": "mBO3tlnZiO6bSjQEBLYISzWU8RY0R4JW"
+              "hermes_menu_token": "NI3urXU6-1xBMTfu98lLahV027B2stHt"
             }
           },
           {
@@ -406,7 +406,7 @@
             "type": "default",
             "size": "small",
             "value": {
-              "hermes_menu_token": "ON8kbg0XOJr2jRZ5Ux2ISNbggYvOheN_"
+              "hermes_menu_token": "qFwVBruwNaSVDspuvBqHuXCKdfjK37E6"
             }
           }
         ]
@@ -431,7 +431,7 @@
         "tag": "div",
         "text": {
           "tag": "lark_md",
-          "content": "**选择后先预览消息，再确认切换**"
+          "content": "**可直接切换，也可先查看消息**"
         }
       },
       {
@@ -491,7 +491,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**飞书机器人菜单增加模型切换、会话切换与消息查看**\n<font color='grey'>今天 17:28 · 358 条消息</font>"
+                  "content": "**飞书机器人菜单增加模型切换、会话切换与消息查看**\n<font color='grey'>今天 18:13 · 358 条消息</font>"
                 }
               }
             ]
@@ -510,7 +510,19 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "V_-Ec4EzbDEGEx0_j0c2-E5OWFMT4mzE"
+                  "hermes_menu_token": "39u8tiBT8d90cdSDJByT8CU_scH6ekRq"
+                }
+              },
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "切换"
+                },
+                "type": "primary",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "6ESW6fW3Pt7kf1YsyrilSc_AMopgliZF"
                 }
               }
             ]
@@ -535,7 +547,7 @@
                 "tag": "div",
                 "text": {
                   "tag": "lark_md",
-                  "content": "**开发飞书 Hermes 菜单加号，实现模型与会话切换及历史查看**\n<font color='grey'>昨天 19:28 · 227 条消息</font>"
+                  "content": "**开发飞书 Hermes 菜单加号，实现模型与会话切换及历史查看**\n<font color='grey'>昨天 20:13 · 227 条消息</font>"
                 }
               }
             ]
@@ -554,7 +566,19 @@
                 "type": "default",
                 "size": "small",
                 "value": {
-                  "hermes_menu_token": "_pZG3ieE6BwV1semd1mZ_nylcKlWZ3sq"
+                  "hermes_menu_token": "TwtYqXSfPM6EaYsCpuljp2lxot2pE1u5"
+                }
+              },
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "切换"
+                },
+                "type": "primary",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "IfqBAHaVDZV4ZIcpIEWdSnPTShNOlszl"
                 }
               }
             ]
@@ -582,7 +606,7 @@
             "type": "default",
             "size": "small",
             "value": {
-              "hermes_menu_token": "5rI1jzH7sto39m-INeDUUNaTcmeMlib8"
+              "hermes_menu_token": "mqy-2V3NiaFc5oDaGJL5K4mpHVyo5Os3"
             }
           },
           {
@@ -594,7 +618,7 @@
             "type": "default",
             "size": "small",
             "value": {
-              "hermes_menu_token": "1pc8K3QcE5V9mlV_FckJaeymB82po1nK"
+              "hermes_menu_token": "_2QIfJQaRpPOQiGZAtHfa90e0EEVmtzN"
             }
           }
         ]
@@ -701,7 +725,7 @@
             "type": "primary",
             "size": "small",
             "value": {
-              "hermes_menu_token": "YUUQcOpbB-z5PqdBfcciumsunpi902pm"
+              "hermes_menu_token": "6SsoOBOECp7uyJPyBA2_xDkrLXcJFljj"
             }
           },
           {
@@ -713,7 +737,7 @@
             "type": "default",
             "size": "small",
             "value": {
-              "hermes_menu_token": "Ddy3nN7FYzR9gf4NL_hbkywsXOk9BQfP"
+              "hermes_menu_token": "coBU5A-BWKTYnQDkz9erb2aM4rnH-_8v"
             }
           }
         ]
@@ -742,6 +766,9 @@
         }
       },
       {
+        "tag": "hr"
+      },
+      {
         "tag": "div",
         "text": {
           "tag": "plain_text",
@@ -760,7 +787,7 @@
             "type": "default",
             "size": "medium",
             "value": {
-              "hermes_menu_token": "HPclkDNw_MuN15eYfDPx_KLFQFL2Gkso"
+              "hermes_menu_token": "H5uMeZiSGL1EnMe96OIPJQnHWGPJfAri"
             }
           },
           {
@@ -772,7 +799,7 @@
             "type": "primary",
             "size": "medium",
             "value": {
-              "hermes_menu_token": "TUu7mH1PrBeTocqaPDtb8QLSWwIlkKt8"
+              "hermes_menu_token": "dQbf0zC_M-PADBAN4jkLUpxNwv0JTRJ2"
             }
           }
         ]

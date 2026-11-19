@@ -324,7 +324,7 @@ class BotMenu:
             page = max(0, int(args[0]))
             rows, more = await self.host.sessions(source, page)
             title = "切换会话"
-            elements.append(md("**选择后先预览消息，再确认切换**"))
+            elements.append(md("**可直接切换，也可先查看消息**"))
             elements.append({"tag": "hr"})
             for index, item in enumerate(rows):
                 sid = item["id"]
@@ -344,7 +344,12 @@ class BotMenu:
                 if sid == current:
                     elements.append(row([md(text)], [md("<font color='green'>当前</font>")]))
                 else:
-                    elements.append(row([md(text)], [btn("查看", ("history", sid, 0))]))
+                    elements.append(
+                        row(
+                            [md(text)],
+                            [btn("查看", ("history", sid, 0)), btn("切换", ("select_session", sid), "primary")],
+                        )
+                    )
             elements.append(note(f"仅显示本私聊的会话 · 第 {page + 1} 页"))
             elements.append(
                 actions(

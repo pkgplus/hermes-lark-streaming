@@ -15,6 +15,7 @@ import pytest
 CASES = [
     "test_native_menu_feedback_replies_to_card_without_changing_ingress_identity",
     "test_native_authority_allows_idle_resume_and_reads_back_route",
+    "test_native_session_list_switch_without_history_routes_next_turn",
     "test_native_model_pin_is_durable_and_next_real_turn_uses_it",
     "test_busy_native_turn_rejects_switch_without_interrupting",
     "test_stale_menu_does_not_change_fresh_route_or_pin",
