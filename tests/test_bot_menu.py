@@ -79,6 +79,7 @@ def adapter(monkeypatch):
     a.cards._client.update_card_message = AsyncMock()
     a.menu.host = NS(
         current=AsyncMock(return_value="sid-current"),
+        recent_dm_sources=AsyncMock(return_value=[]),
         sessions=AsyncMock(return_value=([{"id": "sid-old", "title": "Older"}], False)),
         history=AsyncMock(return_value=([("user", "old question"), ("assistant", "old answer")], False)),
         busy=Mock(return_value=False),
@@ -226,3 +227,26 @@ def test_plain_projection_excludes_internal_messages_and_only_keeps_text():
         },
     ]
     assert plain_messages(rows) == [("assistant", "answer"), ("user", "question")]
+
+
+@pytest.mark.asyncio
+async def test_menu_restores_dm_binding_lost_to_restart(adapter):
+    # A fresh process starts with no in-memory owner map; state.db still has the DM.
+    adapter.menu.owners.clear()
+    adapter.menu.host.recent_dm_sources.return_value = [
+        SessionSource(platform=Platform.FEISHU, chat_id="oc_dm", chat_type="dm", user_id="ou_owner", user_id_alt="on_union")
+    ]
+    await adapter.menu.open(menu_event())
+    adapter.cards._client.send_card_to_chat.assert_awaited_once()
+    assert "ou_owner" in adapter.menu.owners
+
+
+@pytest.mark.asyncio
+async def test_restore_never_adopts_another_users_dm(adapter):
+    adapter.menu.owners.clear()
+    adapter.menu.host.recent_dm_sources.return_value = [
+        SessionSource(platform=Platform.FEISHU, chat_id="oc_other", chat_type="dm", user_id="ou_someone_else", user_id_alt="on_other")
+    ]
+    await adapter.menu.open(menu_event())
+    adapter.cards._client.send_card_to_chat.assert_not_called()
+    assert not adapter.menu.owners
