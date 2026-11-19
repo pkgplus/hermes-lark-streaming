@@ -38,6 +38,28 @@ def identity(obj: Any) -> tuple[str, str, str]:
     return tuple(str(field(obj, key, "") or "") for key in ("open_id", "user_id", "union_id"))  # type: ignore[return-value]
 
 
+def relative_time(ts: Any) -> str:
+    """Compact Chinese relative time for list rows (empty when unknown)."""
+    try:
+        value = float(ts)
+    except (TypeError, ValueError):
+        return ""
+    if value > 1e12:  # milliseconds from older stores
+        value /= 1000.0
+    now = time.time()
+    delta = now - value
+    if delta < 60:
+        return "刚刚"
+    if delta < 3600:
+        return f"{int(delta // 60)} 分钟前"
+    then, today = time.localtime(value), time.localtime(now)
+    if (then.tm_year, then.tm_yday) == (today.tm_year, today.tm_yday):
+        return time.strftime("今天 %H:%M", then)
+    if (then.tm_year, then.tm_yday) == (today.tm_year, today.tm_yday - 1):
+        return time.strftime("昨天 %H:%M", then)
+    return time.strftime("%m月%d日", then)
+
+
 def plain_messages(rows: list[dict[str, Any]]) -> list[tuple[str, str]]:
     result = []
     for row in rows:
@@ -126,6 +148,8 @@ class BotMenu:
         self.owners: OrderedDict[str, Owner] = OrderedDict()
         self.tokens: OrderedDict[str, MenuToken] = OrderedDict()
         self._locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
+        # Session titles seen by the menu, so the preview can name its target.
+        self._titles: dict[str, str] = {}
 
     def observe(self, event: Any) -> None:
         """Only real, normalized inbound DMs establish an app-open-id → DM mapping."""
@@ -198,89 +222,197 @@ class BotMenu:
     async def render(self, owner: Owner, current: str, action: tuple[Any, ...], message: str) -> None:
         a, source = self.adapter, owner.source
         kind, *args = action
-        buttons: list[tuple[str, tuple[Any, ...]]] = []
-        title, body = "Hermes", ""
+        generated: dict[str, MenuToken] = {}
+
+        def btn(label: str, target: tuple[Any, ...], style: str = "default", size: str = "small") -> dict[str, Any]:
+            token = secrets.token_urlsafe(24)
+            generated[token] = MenuToken(owner, message, current, target, time.monotonic() + TOKEN_TTL)
+            return {
+                "tag": "button",
+                "text": {"tag": "plain_text", "content": label[:60]},
+                "type": style,
+                "size": size,
+                "value": {"hermes_menu_token": token},
+            }
+
+        def md(content: str) -> dict[str, Any]:
+            return {"tag": "div", "text": {"tag": "lark_md", "content": content}}
+
+        def plain(content: str) -> dict[str, Any]:
+            return {"tag": "div", "text": {"tag": "plain_text", "content": content}}
+
+        def row(left: list[dict[str, Any]], right: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+            cols: list[dict[str, Any]] = [
+                {"tag": "column", "width": "weighted", "weight": 1, "vertical_align": "center", "elements": left}
+            ]
+            if right:
+                cols.append({"tag": "column", "width": "auto", "vertical_align": "center", "elements": right})
+            return {"tag": "column_set", "flex_mode": "none", "background_style": "default", "columns": cols}
+
+        def note(content: str) -> dict[str, Any]:
+            return {"tag": "note", "elements": [{"tag": "plain_text", "content": content}]}
+
+        def actions(*buttons: dict[str, Any]) -> dict[str, Any]:
+            return {"tag": "action", "actions": list(buttons)}
+
+        def pager(page: int, target: str, more: bool) -> list[dict[str, Any]]:
+            out = []
+            if page:
+                out.append(btn("上一页", (target, page - 1)))
+            if more:
+                out.append(btn("下一页", (target, page + 1)))
+            return out
+
+        title, template, elements = "Hermes", "blue", []
         if kind == "model":
             settings_fn = getattr(a, "get_session_model_settings", None)
             catalog_fn = getattr(a, "list_session_model_picker_providers", None)
             if not settings_fn or not catalog_fn:
-                title, body = "模型菜单不可用", "当前 Hermes 缺少只读模型目录接口，请使用 /model。"
+                title, template = "模型菜单不可用", "grey"
+                elements = [plain("当前 Hermes 缺少只读模型目录接口，请使用 /model。")]
             else:
                 settings = await asyncio.to_thread(settings_fn, source)
                 providers = await asyncio.to_thread(catalog_fn, source, max_models=None, include_moa=False)
                 if settings is None or providers is None:
                     return
-                choices = [(p["slug"], model) for p in providers for model in p["models"]]
                 page = max(0, int(args[0]))
-                title = "切换模型（仅当前会话）"
-                body = f"当前：{settings['provider']} / {settings['model']}\n第 {page + 1} 页"
-                for provider, model in choices[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]:
-                    buttons.append((f"{provider} / {model}", ("select_model", provider, model)))
-                self._pages(buttons, "model", page, len(choices) > (page + 1) * PAGE_SIZE)
-                buttons.append(("刷新模型目录", ("model", 0)))
+                choices = [(p["slug"], model) for p in providers for model in p["models"]]
+                page_rows = choices[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
+                title = "切换模型"
+                elements.append(md(f"当前会话 · **{settings['provider']} / {settings['model']}**"))
+                elements.append({"tag": "hr"})
+                grouped: dict[str, list[str]] = {}
+                for provider, model in page_rows:
+                    grouped.setdefault(provider, []).append(model)
+                for index, (provider, models) in enumerate(grouped.items()):
+                    if index:
+                        elements.append({"tag": "hr"})
+                    elements.append(md(f"<font color='grey'>{provider}</font>"))
+                    for model in models:
+                        is_current = settings["provider"] == provider and settings["model"] == model
+                        right = (
+                            [md("<font color='green'>✓ 当前</font>")]
+                            if is_current
+                            else [btn("选择", ("select_model", provider, model))]
+                        )
+                        elements.append(row([md(f"**{model}**")], right))
+                elements.append(note(f"仅修改当前会话，不改变全局默认模型 · 第 {page + 1} 页"))
+                elements.append(
+                    actions(*pager(page, "model", len(choices) > (page + 1) * PAGE_SIZE), btn("刷新目录", ("model", 0)))
+                )
         elif kind == "session":
             page = max(0, int(args[0]))
             rows, more = await self.host.sessions(source, page)
-            title, body = "会话列表", f"当前：{current or '尚未创建'}\n第 {page + 1} 页（仅当前私聊）"
-            for row in rows:
-                sid = row["id"]
-                label = str(row.get("title") or sid)
-                buttons.append((f"查看消息：{label}", ("history", sid, 0)))
-            self._pages(buttons, "session", page, more)
-            buttons.append(("新建会话", ("select_new",)))
-            buttons.append(("刷新会话", ("session", 0)))
+            title = "切换会话"
+            elements.append(md("**选择后先预览消息，再确认切换**"))
+            elements.append({"tag": "hr"})
+            for index, item in enumerate(rows):
+                sid = item["id"]
+                label = str(item.get("title") or sid)
+                self._titles[sid] = label
+                meta = " · ".join(
+                    part
+                    for part in (
+                        relative_time(item.get("last_active")),
+                        f"{item['message_count']} 条消息" if item.get("message_count") else "",
+                    )
+                    if part
+                )
+                text = f"**{label}**" + (f"\n<font color='grey'>{meta}</font>" if meta else "")
+                if index:
+                    elements.append({"tag": "hr"})
+                if sid == current:
+                    elements.append(row([md(text)], [md("<font color='green'>当前</font>")]))
+                else:
+                    elements.append(row([md(text)], [btn("查看", ("history", sid, 0))]))
+            elements.append(note(f"仅显示本私聊的会话 · 第 {page + 1} 页"))
+            elements.append(
+                actions(
+                    *pager(page, "session", more),
+                    btn("新建会话", ("select_new",)),
+                    btn("刷新", ("session", 0)),
+                )
+            )
         elif kind == "history":
             sid, page = args
             history_rows, more = await self.host.history(source, sid, page)
-            title = f"会话消息 · 第 {page + 1} 页"
-            body = (
-                "\n\n".join(f"{'用户' if role == 'user' else '助手'}：\n{text}" for role, text in history_rows)
-                or "没有可显示的普通对话。"
-            )
-            body = f"选中会话：{sid}\n\n{body}"
+            title = "会话消息"
+            elements.append(md(f"**{self._titles.get(sid, sid)}**\n<font color='grey'>{sid}</font>"))
+            if not history_rows:
+                elements.append(plain("没有可显示的普通对话。"))
+            for role, text in history_rows:
+                elements.append(
+                    {
+                        "tag": "column_set",
+                        "flex_mode": "none",
+                        "background_style": "grey" if role == "user" else "default",
+                        "columns": [
+                            {
+                                "tag": "column",
+                                "width": "weighted",
+                                "weight": 1,
+                                "vertical_align": "top",
+                                "elements": [
+                                    md(f"<font color='grey'>{'你' if role == 'user' else 'Hermes'}</font>"),
+                                    plain(text[:800]),
+                                ],
+                            }
+                        ],
+                    }
+                )
+            elements.append(note(f"只读预览，翻页不改变当前会话 · 第 {page + 1} 页"))
+            buttons = []
             if page:
-                buttons.append(("上一页", ("history", sid, page - 1)))
+                buttons.append(btn("上一页", ("history", sid, page - 1)))
             if more:
-                buttons.append(("下一页", ("history", sid, page + 1)))
+                buttons.append(btn("下一页", ("history", sid, page + 1)))
             if sid != current:
-                buttons.append(("切换到此会话", ("select_session", sid)))
-            buttons.append(("返回会话列表", ("session", 0)))
+                buttons.append(btn("切换到此会话", ("select_session", sid), "primary"))
+            buttons.append(btn("返回列表", ("session", 0)))
+            elements.append(actions(*buttons))
         elif kind in {"select_model", "select_session", "select_new"}:
-            title = "确认切换？"
-            body = " / ".join(str(v) for v in args) + "\n只提交原生命令；权限、策略及费用确认仍由 Hermes 执行。"
-            if kind == "select_model":
-                body += "\n切换后，当前会话上下文可能发送给所选提供商；不会修改全局默认模型。"
-            elif kind == "select_new":
-                title, body = "新建会话？", "开始新的对话上下文，当前会话历史仍保留，可从会话列表恢复。"
-            back = "model" if kind == "select_model" else "session"
-            buttons = [("确认切换", (kind.replace("select_", "confirm_"), *args)), ("取消", (back, 0))]
+            if kind == "select_new":
+                title, template = "新建会话？", "orange"
+                elements = [
+                    plain("将开始新的对话上下文。当前会话历史仍保留，可从会话列表切回。"),
+                ]
+                buttons = [btn("取消", ("session", 0), size="medium"), btn("新建", ("confirm_new",), "primary", "medium")]
+            elif kind == "select_model":
+                provider, model = args
+                title, template = "确认切换模型？", "orange"
+                elements = [
+                    md(f"**{provider} / {model}**"),
+                    {"tag": "hr"},
+                    plain("切换后，当前会话的上下文可能发送给该提供商。只影响本会话，不修改全局默认。"),
+                ]
+                buttons = [
+                    btn("取消", ("model", 0), size="medium"),
+                    btn("确认切换", ("confirm_model", provider, model), "primary", "medium"),
+                ]
+            else:
+                title, template = "确认切换会话？", "orange"
+                elements = [
+                    md(f"**{args[0]}**"),
+                    plain("之后的消息将进入该会话的上下文。当前会话仍保留，可随时切回。"),
+                ]
+                buttons = [
+                    btn("取消", ("session", 0), size="medium"),
+                    btn("确认切换", ("confirm_session", args[0]), "primary", "medium"),
+                ]
+            elements.append(actions(*buttons))
         else:
             return
+
         self._prune()
         # A new generation retires every previous button for this owner/chat.
         for token, state in list(self.tokens.items()):
             if state.owner.ids[0] == owner.ids[0] and state.owner.source.chat_id == source.chat_id:
                 del self.tokens[token]
-        generated: dict[str, MenuToken] = {}
-        elements: list[dict[str, Any]] = [{"tag": "div", "text": {"tag": "plain_text", "content": body}}]
-        for label, target in buttons:
-            token = secrets.token_urlsafe(24)
-            generated[token] = MenuToken(owner, message, current, target, time.monotonic() + TOKEN_TTL)
-            elements.append(
-                {
-                    "tag": "action",
-                    "actions": [
-                        {
-                            "tag": "button",
-                            "text": {"tag": "plain_text", "content": label[:80]},
-                            "value": {"hermes_menu_token": token},
-                        }
-                    ],
-                }
-            )
+        if not generated:
+            return
         card = {
             "config": {"wide_screen_mode": True, "update_multi": True, "enable_forward": False},
-            "header": {"title": {"tag": "plain_text", "content": title}},
+            "header": {"template": template, "title": {"tag": "plain_text", "content": title}},
             "elements": elements,
         }
         if message:
@@ -293,13 +425,6 @@ class BotMenu:
             state.message = message
         self.tokens.update(generated)
         self._prune()
-
-    @staticmethod
-    def _pages(buttons: list[Any], kind: str, page: int, more: bool) -> None:
-        if page:
-            buttons.append(("上一页", (kind, page - 1)))
-        if more:
-            buttons.append(("下一页", (kind, page + 1)))
 
     async def click(self, event: Any) -> None:
         try:
@@ -333,6 +458,11 @@ class BotMenu:
                         await self.adapter.cards._client.update_card_message(
                             state.message,
                             {
+                                "config": {"wide_screen_mode": True, "update_multi": True},
+                                "header": {
+                                    "template": "wathet",
+                                    "title": {"tag": "plain_text", "content": "菜单已失效"},
+                                },
                                 "elements": [
                                     {
                                         "tag": "div",
@@ -341,7 +471,7 @@ class BotMenu:
                                             "content": "会话忙碌或已改变，请等待任务结束后重新打开菜单。",
                                         },
                                     }
-                                ]
+                                ],
                             },
                         )
                         return

@@ -1,0 +1,782 @@
+[
+  {
+    "config": {
+      "wide_screen_mode": true,
+      "update_multi": true,
+      "enable_forward": false
+    },
+    "header": {
+      "template": "blue",
+      "title": {
+        "tag": "plain_text",
+        "content": "切换模型"
+      }
+    },
+    "elements": [
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "当前会话 · **mytokens-resp / gpt-6.1-sol**"
+        }
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "<font color='grey'>mytokens-comp</font>"
+        }
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**deepseek-v4-pro**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "2LeCiYfz8QgbtithrA660L2UUhmEzxcp"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**glm-5.2**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "8ucMOQZW5Y6eUljiWFdHX5LBRXfvytiB"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**qwen3.7-max**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "qmkGp5xvnxZkvN37IhWCLotPTiJSYNyw"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "<font color='grey'>mytokens-resp</font>"
+        }
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**gpt-6.2-sol**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "C_jzDaOoG14Zqm1hoTDV5akRxk5-BkE0"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**gpt-6.1-sol**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "<font color='green'>✓ 当前</font>"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**gpt-5.6-terra**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "n-jHpRCgh9FXnlsQtfXnpRqfrSlSdD15"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**gpt-5.5**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "C9gr7TRqTdVfflSAyKvyqim8l37ONrNt"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "<font color='grey'>mytokens-msg</font>"
+        }
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**claude-opus-5.5**"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "选择"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "JiCBaeBnpeMwBQCmmqHY7rkwPaUVc7Qe"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "note",
+        "elements": [
+          {
+            "tag": "plain_text",
+            "content": "仅修改当前会话，不改变全局默认模型 · 第 1 页"
+          }
+        ]
+      },
+      {
+        "tag": "action",
+        "actions": [
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "下一页"
+            },
+            "type": "default",
+            "size": "small",
+            "value": {
+              "hermes_menu_token": "mBO3tlnZiO6bSjQEBLYISzWU8RY0R4JW"
+            }
+          },
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "刷新目录"
+            },
+            "type": "default",
+            "size": "small",
+            "value": {
+              "hermes_menu_token": "ON8kbg0XOJr2jRZ5Ux2ISNbggYvOheN_"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "config": {
+      "wide_screen_mode": true,
+      "update_multi": true,
+      "enable_forward": false
+    },
+    "header": {
+      "template": "blue",
+      "title": {
+        "tag": "plain_text",
+        "content": "切换会话"
+      }
+    },
+    "elements": [
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "**选择后先预览消息，再确认切换**"
+        }
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**机器人自定义菜单打开飞书小程序**\n<font color='grey'>刚刚 · 290 条消息</font>"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "<font color='green'>当前</font>"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**飞书机器人菜单增加模型切换、会话切换与消息查看**\n<font color='grey'>今天 17:28 · 358 条消息</font>"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "查看"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "V_-Ec4EzbDEGEx0_j0c2-E5OWFMT4mzE"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "hr"
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "**开发飞书 Hermes 菜单加号，实现模型与会话切换及历史查看**\n<font color='grey'>昨天 19:28 · 227 条消息</font>"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "column",
+            "width": "auto",
+            "vertical_align": "center",
+            "elements": [
+              {
+                "tag": "button",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "查看"
+                },
+                "type": "default",
+                "size": "small",
+                "value": {
+                  "hermes_menu_token": "_pZG3ieE6BwV1semd1mZ_nylcKlWZ3sq"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "note",
+        "elements": [
+          {
+            "tag": "plain_text",
+            "content": "仅显示本私聊的会话 · 第 1 页"
+          }
+        ]
+      },
+      {
+        "tag": "action",
+        "actions": [
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "新建会话"
+            },
+            "type": "default",
+            "size": "small",
+            "value": {
+              "hermes_menu_token": "5rI1jzH7sto39m-INeDUUNaTcmeMlib8"
+            }
+          },
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "刷新"
+            },
+            "type": "default",
+            "size": "small",
+            "value": {
+              "hermes_menu_token": "1pc8K3QcE5V9mlV_FckJaeymB82po1nK"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "config": {
+      "wide_screen_mode": true,
+      "update_multi": true,
+      "enable_forward": false
+    },
+    "header": {
+      "template": "blue",
+      "title": {
+        "tag": "plain_text",
+        "content": "会话消息"
+      }
+    },
+    "elements": [
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "**飞书机器人菜单增加模型切换、会话切换与消息查看**\n<font color='grey'>20261119_130129_75452863</font>"
+        }
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "grey",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "top",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "<font color='grey'>你</font>"
+                }
+              },
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "在现有飞书插件基础上，可以实现机器人自定义菜单增加模型切换、会话切换吗？"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "column_set",
+        "flex_mode": "none",
+        "background_style": "default",
+        "columns": [
+          {
+            "tag": "column",
+            "width": "weighted",
+            "weight": 1,
+            "vertical_align": "top",
+            "elements": [
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "lark_md",
+                  "content": "<font color='grey'>Hermes</font>"
+                }
+              },
+              {
+                "tag": "div",
+                "text": {
+                  "tag": "plain_text",
+                  "content": "可以。沿用现有长连接与原生会话切换能力，新增菜单事件接入与交互卡片，保留原命令权限与费用确认。"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tag": "note",
+        "elements": [
+          {
+            "tag": "plain_text",
+            "content": "只读预览，翻页不改变当前会话 · 第 1 页"
+          }
+        ]
+      },
+      {
+        "tag": "action",
+        "actions": [
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "切换到此会话"
+            },
+            "type": "primary",
+            "size": "small",
+            "value": {
+              "hermes_menu_token": "YUUQcOpbB-z5PqdBfcciumsunpi902pm"
+            }
+          },
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "返回列表"
+            },
+            "type": "default",
+            "size": "small",
+            "value": {
+              "hermes_menu_token": "Ddy3nN7FYzR9gf4NL_hbkywsXOk9BQfP"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "config": {
+      "wide_screen_mode": true,
+      "update_multi": true,
+      "enable_forward": false
+    },
+    "header": {
+      "template": "orange",
+      "title": {
+        "tag": "plain_text",
+        "content": "确认切换模型？"
+      }
+    },
+    "elements": [
+      {
+        "tag": "div",
+        "text": {
+          "tag": "lark_md",
+          "content": "**mytokens-resp / gpt-6.2-sol**"
+        }
+      },
+      {
+        "tag": "div",
+        "text": {
+          "tag": "plain_text",
+          "content": "切换后，当前会话的上下文可能发送给该提供商。只影响本会话，不修改全局默认。"
+        }
+      },
+      {
+        "tag": "action",
+        "actions": [
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "取消"
+            },
+            "type": "default",
+            "size": "medium",
+            "value": {
+              "hermes_menu_token": "HPclkDNw_MuN15eYfDPx_KLFQFL2Gkso"
+            }
+          },
+          {
+            "tag": "button",
+            "text": {
+              "tag": "plain_text",
+              "content": "确认切换"
+            },
+            "type": "primary",
+            "size": "medium",
+            "value": {
+              "hermes_menu_token": "TUu7mH1PrBeTocqaPDtb8QLSWwIlkKt8"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]
