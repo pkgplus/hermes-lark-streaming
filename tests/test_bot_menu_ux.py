@@ -59,9 +59,49 @@ async def test_fixed_menus_do_not_offer_current_session_entry(adapter):
 
 
 @pytest.mark.asyncio
-async def test_selecting_session_always_opens_its_messages_first(adapter):
+async def test_session_list_can_confirm_switch_without_reading_history(adapter):
     await adapter.menu.open(menu_event("session"))
-    assert ("select_session", "sid-old") not in tokens(adapter)
+    actions = tokens(adapter)
+    assert ("history", "sid-old", 0) in actions
+    assert ("select_session", "sid-old") in actions
+    card = adapter.cards._client.send_card_to_chat.call_args.args[1]
+    content = json.dumps(card, ensure_ascii=False)
+    assert "可直接切换，也可先查看消息" in content
+    await adapter.menu.click(action_event(actions[("select_session", "sid-old")]))
+    adapter.menu.host.history.assert_not_awaited()
+    assert not adapter._dispatch_synthetic_event.called
+    card = adapter.cards._client.update_card_message.call_args.args[1]
+    assert card["header"]["title"]["content"] == "确认切换会话？"
+    await adapter.menu.click(action_event(tokens(adapter)[("confirm_session", "sid-old")]))
+    adapter.menu.host.history.assert_not_awaited()
+    assert adapter._dispatch_synthetic_event.call_args.kwargs["text"] == "/resume sid-old"
+
+
+@pytest.mark.asyncio
+async def test_session_list_current_session_has_no_switch_action(adapter):
+    adapter.menu.host.sessions.return_value = ([{"id": "sid-current", "title": "Current"}], False)
+    await adapter.menu.open(menu_event("session"))
+    assert ("select_session", "sid-current") not in tokens(adapter)
+    assert ("confirm_session", "sid-current") not in tokens(adapter)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("blocked", ["busy", "stale"])
+async def test_direct_session_switch_rechecks_busy_and_expected_session(adapter, blocked):
+    await adapter.menu.open(menu_event("session"))
+    await adapter.menu.click(action_event(tokens(adapter)[("select_session", "sid-old")]))
+    if blocked == "busy":
+        adapter.menu.host.busy.return_value = True
+    else:
+        adapter.menu.host.current.return_value = "sid-new"
+    await adapter.menu.click(action_event(tokens(adapter)[("confirm_session", "sid-old")]))
+    adapter.menu.host.history.assert_not_awaited()
+    assert not adapter._dispatch_synthetic_event.called
+
+
+@pytest.mark.asyncio
+async def test_session_list_still_offers_read_only_message_preview(adapter):
+    await adapter.menu.open(menu_event("session"))
     await adapter.menu.click(action_event(tokens(adapter)[("history", "sid-old", 0)]))
     adapter.menu.host.history.assert_awaited_once_with(
         adapter.menu.owners["ou_owner"].source, "sid-old", 0

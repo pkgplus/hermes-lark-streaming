@@ -260,9 +260,33 @@ async def test_native_menu_feedback_replies_to_card_without_changing_ingress_ide
 
 
 @pytest.mark.asyncio
-async def test_native_authority_allows_idle_resume_and_reads_back_route(native, provider):
+async def test_native_authority_allows_idle_resume_and_reads_back_route(native, provider, monkeypatch, entrypoint="command"):
     assert native.runner.session_authority is not None
-    await dispatch(native, f"/resume {native.old}")
+    if entrypoint == "card":
+        import time
+        from unittest.mock import AsyncMock
+
+        from hermes_lark_streaming.bot_menu import Owner
+        from test_bot_menu import action_event, tokens
+
+        menu = native.adapter.menu
+        owner = Owner(("ou_owner", "tenant", ""), native.source, time.monotonic() + 300)
+        menu.owners["ou_owner"] = owner
+        monkeypatch.setattr(native.adapter.cards._client, "send_card_to_chat", AsyncMock(return_value="om_card"))
+        monkeypatch.setattr(native.adapter.cards._client, "update_card_message", AsyncMock())
+        history = AsyncMock(side_effect=AssertionError("direct switching must not read history"))
+        monkeypatch.setattr(menu.host, "history", history)
+        await menu.render(owner, native.current, ("session", 0), "")
+        select_event = action_event(tokens(native.adapter)[("select_session", native.old)])
+        select_event.operator.union_id = ""
+        await menu.click(select_event)
+        assert durable_route(native)["session_id"] == native.current
+        confirm_event = action_event(tokens(native.adapter)[("confirm_session", native.old)])
+        confirm_event.operator.union_id = ""
+        await menu.click(confirm_event)
+        history.assert_not_awaited()
+    else:
+        await dispatch(native, f"/resume {native.old}")
     entry = await native.runner.async_session_store.lookup_by_session_key(
         native.runner._session_key_for_source(native.source)
     )
@@ -274,6 +298,11 @@ async def test_native_authority_allows_idle_resume_and_reads_back_route(native, 
     messages = await native.runner._session_db.get_messages(native.old)
     assert any("This turn follows resume." in str(row.get("content")) for row in messages)
     assert not await native.runner._session_db.get_messages(native.current)
+
+
+@pytest.mark.asyncio
+async def test_native_session_list_switch_without_history_routes_next_turn(native, provider, monkeypatch):
+    await test_native_authority_allows_idle_resume_and_reads_back_route(native, provider, monkeypatch, entrypoint="card")
 
 
 @pytest.mark.asyncio
