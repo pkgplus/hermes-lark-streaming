@@ -1,4 +1,4 @@
 include plugin.yaml __init__.py MIGRATION.md README.en.md CHANGELOG.md AGENTS.md
-include tests/conftest.py
+include tests/conftest.py tests/native_menu_gateway_cases.py MENU_VALIDATION.md
 recursive-include assets *.jpg
 include scripts/feishu_smoke.py

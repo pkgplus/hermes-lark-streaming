@@ -6,17 +6,19 @@ import asyncio
 import logging
 import weakref
 from collections import OrderedDict
-from typing import Any
+from typing import Any, ClassVar
 
 from gateway.config import StreamingConfig
 from gateway.platforms.base import MessageEvent, SendResult
 from gateway.session_context import get_session_env
 from plugins.platforms.feishu import adapter as builtin
 
+from .bot_menu import BotMenu, MenuDispatcher, field
 from .cardkit.builder import build_static_card
 from .config import DEFAULT_DOMAIN, LARK_DOMAIN, Config, hermes_home
 from .controller import StreamCardController
 from .feishu import FeishuClient, FeishuClientConfig
+from .menu_host import MENU_COMMAND, finish_menu_command
 
 _logger = logging.getLogger(__name__)
 ACTIVE: weakref.WeakSet[Any] = weakref.WeakSet()
@@ -25,6 +27,33 @@ ACTIVE: weakref.WeakSet[Any] = weakref.WeakSet()
 class FeishuStreamingAdapter(builtin.FeishuAdapter):
     SUPPORTS_NATIVE_STREAMING = True
     SUPPORTS_MESSAGE_EDITING = True
+    _CARD_ACTION_ROUTES = (
+        ("hermes_menu_token", "_handle_bot_menu_action"),
+        *getattr(builtin.FeishuAdapter, "_CARD_ACTION_ROUTES", ()),
+    )
+    _WEBHOOK_EVENT_HANDLERS: ClassVar[dict[str, str]] = {
+        **getattr(builtin.FeishuAdapter, "_WEBHOOK_EVENT_HANDLERS", {}),
+        "application.bot.menu_v6": "_on_bot_menu",
+    }
+
+    def _build_event_handler(self) -> Any:
+        base = super()._build_event_handler()
+        if base is None:
+            return None
+        builder = builtin.EventDispatcherHandler.builder(self._encrypt_key, self._verification_token)
+        register = getattr(builder, "register_p2_application_bot_menu_v6", None)
+        if register is None:
+            _logger.warning("Bot menu unavailable: SDK lacks application.bot.menu_v6")
+            return base
+        return MenuDispatcher(base, register(self._on_bot_menu).build())
+
+    def _on_bot_menu(self, data: Any) -> None:
+        if self._loop_accepts_callbacks(self._loop):
+            self._submit_on_loop(self._loop, self.menu.open(data))
+
+    def _handle_bot_menu_action(self, *, event: Any, action_value: dict[str, Any], loop: Any) -> Any:
+        self._submit_on_loop(loop, self.menu.click(event))
+        return self._card_response()
 
     def __init__(self, config: Any) -> None:
         super().__init__(config)
@@ -42,10 +71,30 @@ class FeishuStreamingAdapter(builtin.FeishuAdapter):
         self._card_routes: OrderedDict[tuple[str, str], str] = OrderedDict()
         self._card_loop: asyncio.AbstractEventLoop | None = None
         self._static_cards: OrderedDict[str, None] = OrderedDict()
+        self.menu = BotMenu(self)
         ACTIVE.add(self)
 
     async def handle_message(self, event: MessageEvent) -> None:
         self._card_loop = asyncio.get_running_loop()
+        self.menu.observe(event)
+        # Called under the host's per-chat ingress lock. Recheck after synthetic
+        # sender/profile lookups, immediately before native ingress claims its guard.
+        expected = field(event.raw_message, "_hermes_menu_expected")
+        if expected is not None:
+            # Keep the synthetic id for native ingress/dedup; only reply to the
+            # real card bound to the verified action, including native fallback.
+            event.reply_anchor_override = field(event.raw_message, "_hermes_menu_reply_to")
+            if self.menu.host.busy(event.source) or await self.menu.host.current(event.source) != expected:
+                await self.send(event.source.chat_id, "会话忙碌或已改变, 请重新打开菜单。")
+                return
+            try:
+                async with self.menu.host.command_guard(event, expected):
+                    # Native inline dispatch retains runner ingress/auth and reply
+                    # delivery, but does not spawn a task after the CAS lock exits.
+                    await finish_menu_command(self._dispatch_inline_reply(event))
+            except (PermissionError, ValueError):
+                await self.send(event.source.chat_id, "会话忙碌或已改变, 请重新打开菜单。")
+            return
         # 引用目标和入站消息身份分开保存，不通过 chat_id 猜测所属用户
         raw = event.raw_message
         body = getattr(getattr(raw, "event", None), "message", None)
@@ -60,6 +109,52 @@ class FeishuStreamingAdapter(builtin.FeishuAdapter):
             while len(self._card_routes) > 1024:
                 self._card_routes.popitem(last=False)
         await super().handle_message(event)
+
+    async def send_slash_confirm(
+        self,
+        chat_id: str,
+        title: str,
+        message: str,
+        session_key: str,
+        confirm_id: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> SendResult:
+        from tools import slash_confirm  # type: ignore[import-untyped]
+
+        context = MENU_COMMAND.get()
+        pending = slash_confirm.get_pending(session_key)
+        if context is not None and pending and pending["confirm_id"] == confirm_id:
+            event, expected = context
+            handler = pending["handler"]
+
+            async def guarded_confirmation(choice: str) -> Any:
+                if choice == "cancel":
+                    return await handler(choice)
+                # Native actor checks and single-use resolve happen BEFORE this
+                # callback. Register through the supported confirmation API,
+                # never edit the runner or the registry's private objects.
+                async with self._get_chat_lock(chat_id):
+                    try:
+                        async with self.menu.host.command_guard(event, expected, confirmation=True):
+                            return await finish_menu_command(handler(choice))
+                    except (PermissionError, ValueError):
+                        return "会话忙碌或已改变, 请重新打开菜单。"
+
+            slash_confirm.register(
+                session_key,
+                confirm_id,
+                pending["command"],
+                guarded_confirmation,
+                authority=pending["authority"],
+            )
+        return await super().send_slash_confirm(
+            chat_id=chat_id,
+            title=title,
+            message=message,
+            session_key=session_key,
+            confirm_id=confirm_id,
+            metadata=metadata,
+        )
 
     def supports_native_streaming(self, chat_type: str | None = None, metadata: dict | None = None) -> bool:
         return bool(self.cards._cfg.enabled)
@@ -79,7 +174,7 @@ class FeishuStreamingAdapter(builtin.FeishuAdapter):
         self._card_loop = asyncio.get_running_loop()
         # 宿主中间帧带展示光标，比较累计正文前必须剥离；终态正文原样保留
         if not finalize and self._stream_cursor and text.endswith(self._stream_cursor):
-            text = text[:-len(self._stream_cursor)]
+            text = text[: -len(self._stream_cursor)]
         source_id = get_session_env("HERMES_SESSION_MESSAGE_ID") or reply_to or turn_id
         anchor = self._card_routes.get((chat_id, source_id), reply_to)
         try:

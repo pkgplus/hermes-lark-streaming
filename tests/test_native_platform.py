@@ -399,7 +399,13 @@ async def test_native_clarify_text_card_keeps_core_reply_resolution(adapter):
     register("clarify", "s", "Which?", ["A", "B"])
     try:
         mark_awaiting_text("clarify")
-        sent = await adapter.send_clarify("chat", "Which?", ["A", "B"], "clarify", "s")
+        # Hermes 0.23 renders native clarify buttons; its send helper needs a live
+        # SDK connection, unlike 0.22's text-only fallback. Mock only delivery.
+        with patch.object(adapter, "_send_interactive_card", new=AsyncMock(
+            return_value=SendResult(success=True, message_id="clarify-card")
+        )):
+            adapter._client = MagicMock()
+            sent = await adapter.send_clarify("chat", "Which?", ["A", "B"], "clarify", "s")
         assert sent.success
         assert _entries["clarify"].awaiting_text
         assert resolve_gateway_clarify("clarify", "A")
